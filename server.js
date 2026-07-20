@@ -132,20 +132,47 @@ const questions = [
         id: 20,
         answers: ["พระเพื่อน พระแพง", "พระเพื่อนพระแพง"], 
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
-        hint: "สองแฝดหญิงที่หลงรักพระลอ"
+        hint: "เหมือนพ่อ"
     }
 ];
 
 let currentQuestionIndex = 0;
 let players = {};
 let correctCount = 0;
-let prevRankingsSnapshot = []; // บันทึกอันดับก่อนตอบคำถาม
+let prevRankingsSnapshot = [];
 
-// ฟังก์ชันจัดอันดับผู้เล่นทั้งหมด
+// ⏱️ ตัวแปรระบบเวลา
+let timeLeft = 30;
+let timerInterval = null;
+
 function getSortedPlayers() {
     return Object.entries(players)
         .map(([id, p]) => ({ id, name: p.name, score: p.score, prevRank: p.prevRank || 999 }))
         .sort((a, b) => b.score - a.score);
+}
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeLeft = 30; // รีเซ็ตเวลาเริ่มต้นที่ 30 วินาที
+    io.emit('timerUpdate', timeLeft);
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        io.emit('timerUpdate', timeLeft);
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            revealAnswerLogic(); // หมดเวลาเฉลยให้อัตโนมัติ
+        }
+    }, 1000);
+}
+
+function revealAnswerLogic() {
+    clearInterval(timerInterval);
+    const qData = questions[currentQuestionIndex];
+    const revealedText = qData.answers.join(" หรือ ");
+    io.emit('answerRevealed', revealedText);
+    currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
 }
 
 io.on('connection', (socket) => {
@@ -158,7 +185,6 @@ io.on('connection', (socket) => {
     socket.on('startNextQuestion', () => {
         correctCount = 0;
         
-        // บันทึกอันดับเดิมของทุกคนไว้ก่อนเริ่มข้อใหม่
         const sorted = getSortedPlayers();
         prevRankingsSnapshot = [...sorted];
         sorted.forEach((p, idx) => {
@@ -181,6 +207,14 @@ io.on('connection', (socket) => {
             qIndex: currentQuestionIndex + 1,
             boxesCount: charBoxesCount
         });
+
+        startTimer(); // เริ่มนับถอยหลังทันทีเมื่อเริ่มข้อใหม่
+    });
+
+    // ➕ ปุ่มโฮสต์กดเพิ่มเวลา
+    socket.on('addTime', (seconds) => {
+        timeLeft += seconds;
+        io.emit('timerUpdate', timeLeft);
     });
 
     socket.on('revealTile', (tileIndex) => {
@@ -188,10 +222,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('showAnswer', () => {
-        const qData = questions[currentQuestionIndex];
-        const revealedText = qData.answers.join(" หรือ ");
-        io.emit('answerRevealed', revealedText);
-        currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+        revealAnswerLogic();
     });
 
     socket.on('submitAnswer', (data) => {
@@ -203,22 +234,21 @@ io.on('connection', (socket) => {
         const isCorrect = currentQ.answers.includes(data.answer.trim());
 
         let scoreGained = 0;
-        let effect = { text: "🎯 คะแนนปกติ", color: "#3498db", type: "normal" };
+        let effect = { text: "🎯 คะแนนปกติ", color: "#38bdf8", type: "normal" };
 
         if (isCorrect) {
             correctCount++;
             const baseScore = Math.max(100, 1000 - (data.timeUsed * 20));
             
-            // 🎲 ระบบสุ่มโบนัสพิเศษ (Random Multipliers)
             const rand = Math.random() * 100;
             if (rand < 15) {
-                effect = { text: "🔥 Critical x2!", color: "#e74c3c", type: "crit" };
+                effect = { text: "🔥 Critical x2!", color: "#f87171", type: "crit" };
                 scoreGained = baseScore * 2;
             } else if (rand < 35) {
-                effect = { text: "⚡ Super Speed x1.5!", color: "#f39c12", type: "speed" };
+                effect = { text: "⚡ Super Speed x1.5!", color: "#fbbf24", type: "speed" };
                 scoreGained = Math.floor(baseScore * 1.5);
             } else if (rand < 50) {
-                effect = { text: "🎁 Lucky Bonus +300!", color: "#9b59b6", type: "bonus" };
+                effect = { text: "🎁 Lucky Bonus +300!", color: "#c084fc", type: "bonus" };
                 scoreGained = baseScore + 300;
             } else {
                 scoreGained = baseScore;
@@ -227,16 +257,14 @@ io.on('connection', (socket) => {
             player.score += scoreGained;
             io.emit('updateCorrectCount', correctCount);
         } else {
-            // 💣 สุ่มโอกาสโดนกับดักหักคะแนน 25% เมื่อตอบผิด
             const rand = Math.random() * 100;
             if (rand < 25) {
-                effect = { text: "💣 เจอระเบิด -100!", color: "#c0392b", type: "trap" };
+                effect = { text: "💣 เจอระเบิด -100!", color: "#ef4444", type: "trap" };
                 scoreGained = -100;
                 player.score = Math.max(0, player.score + scoreGained);
             }
         }
 
-        // 📊 คำนวณอันดับใหม่ และเช็กว่า "แซงใครมา" (Kahoot Style)
         const updatedSorted = getSortedPlayers();
         const newRankIndex = updatedSorted.findIndex(p => p.id === socket.id);
         const newRank = newRankIndex + 1;
@@ -244,14 +272,12 @@ io.on('connection', (socket) => {
 
         let passedPlayerName = null;
         if (newRank < oldRank) {
-            // ดึงชื่อคนที่เคยอยู่อันดับเหนือเราใน snapshot เดิม
             const surpassedPlayer = prevRankingsSnapshot[newRankIndex];
-            if (surpassPlayer && surpassedPlayer.id !== socket.id) {
+            if (surpassedPlayer && surpassedPlayer.id !== socket.id) {
                 passedPlayerName = surpassedPlayer.name;
             }
         }
 
-        // ส่งผลลัพธ์แบบจัดเต็มกลับไปที่หน้าจอนักเรียน
         socket.emit('answerResult', {
             correct: isCorrect,
             scoreGained: scoreGained,
