@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าเล่นเกมวรรณคดีไทย</title>
+    <title>ฉันมาเพื่อท้าทาย</title>
+    <title>วันภาษาไทย โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         body { font-family: 'Kanit', sans-serif; background: #f0f2f5; text-align: center; margin: 0; padding: 20px; }
@@ -23,16 +24,16 @@
 </head>
 <body>
     <div class="card" id="login-box">
-        <h2>⚔️ วรรณคดีแฟนพันธุ์แท้</h2>
-        <input type="text" id="player-name" placeholder="กรอกชื่อของคุณ..." required>
-        <button onclick="joinGame()">เข้าสู่ห้องเกม</button>
+        <h2>⚔️ แฟนพันธุ์แท้ตัวละครในวรรณคดี</h2>
+        <input type="text" id="player-name" placeholder="กรอกชื่อ..." required>
+        <button onclick="joinGame()">ท้าทายเกม</button>
     </div>
 
     <div class="card" id="game-box" style="display: none;">
         <h3>ผู้เล่น: <span id="my-name"></span></h3>
         <h2>คะแนนสะสม: <span id="my-score" style="color:#e67e22;">0</span></h2>
         <hr>
-        <p id="question-title">รอครูเริ่มข้อสอบ...</p>
+        <p id="question-title">กำลังจะเริ่มเร็ว ๆ นี้</p>
         
         <!-- กล่องแสดงตัวอักษร -->
         <div class="box-container" id="char-boxes"></div>
