@@ -136,7 +136,7 @@ const questions = [
     }
 ];
 
-let currentQuestionIndex = 0;
+let currentQuestionIndex = -1; // เริ่มที่ -1 เพื่อให้กดเริ่มครั้งแรกไปข้อที่ 1 (Index 0)
 let players = {};
 let correctCount = 0;
 let prevRankingsSnapshot = [];
@@ -170,6 +170,9 @@ function startTimer() {
 function revealAnswerLogic() {
     clearInterval(timerInterval);
     isQuestionActive = false;
+    
+    if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) return;
+    
     const qData = questions[currentQuestionIndex];
     if (!qData) return;
     
@@ -185,9 +188,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('startNextQuestion', () => {
-        if (isQuestionActive) {
-            currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
-        }
+        currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
 
         correctCount = 0;
         const sorted = getSortedPlayers();
