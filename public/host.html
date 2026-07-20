@@ -122,6 +122,13 @@
             if(tile) tile.classList.add('open');
         });
 
+        // เมื่อกดเฉลย ให้เปิดแผ่นป้ายทั้งหมดและแสดงเฉลย
+        socket.on('answerRevealed', (answerText) => {
+            const tiles = document.querySelectorAll('.tile');
+            tiles.forEach(tile => tile.classList.add('open'));
+            document.getElementById('hint-text').innerHTML = `<b style="color: #4ade80; font-size: 22px;">💡 เฉลยคำตอบ: ${answerText}</b>`;
+        });
+
         socket.on('updatePlayerCount', (count) => {
             document.getElementById('player-count').innerText = count;
         });
