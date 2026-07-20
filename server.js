@@ -17,7 +17,7 @@ const questions = [
     {
         id: 1,
         answers: ["หนุมาน"],
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        image: "https://siammongkol.wordpress.com/wp-content/uploads/2017/07/hanuman1-1.jpg",
         hint: "กายาสีขาว หาวเป็นดาวเป็นเดือน"
     },
     {
