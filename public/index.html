@@ -78,7 +78,6 @@
         const socket = io();
         let startTime = 0;
 
-        // ฟังก์ชันระบบเสียงปลอดภัย (ไม่หลุด/ไม่ค้าง)
         function playSound(type) {
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -107,7 +106,7 @@
                     osc.stop(audioCtx.currentTime + 0.3);
                 }
             } catch (e) {
-                console.log("Audio not supported or blocked");
+                console.log("Audio play error:", e);
             }
         }
 
@@ -217,9 +216,11 @@
             }
         });
 
-        socket.on('answerRevealed', (answer) => {
+        // เมื่อมีการกดเฉลยจากโฮสต์ ให้แสดงคำตอบฝั่งผู้เล่นด้วย
+        socket.on('answerRevealed', (answerText) => {
             document.getElementById('answer-input').disabled = true;
             document.getElementById('send-btn').disabled = true;
+            document.getElementById('question-title').innerHTML = `<b style="color: #4ade80; font-size: 18px;">💡 เฉลย: ${answerText}</b>`;
         });
     </script>
 </body>
