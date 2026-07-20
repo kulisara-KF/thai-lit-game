@@ -23,7 +23,7 @@ const questions = [
         id: 1,
         answer: "หนุมาน",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
-        hint: "มีพาหนะเป็นม้าสีขาว (เผือก) หาวเป็นดาวเป็นเดือน"
+        hint: "กายาสีขาว หาวเป็นดาวเป็นเดือน"
     },
     {
         id: 2,
@@ -35,7 +35,109 @@ const questions = [
         id: 3,
         answer: "สุดสาคร",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Sudsakorn_painting.jpg/400px-Sudsakorn_painting.jpg",
-        hint: "ลูกนางเงือก ขี่ม้านิลมังกร"
+        hint: "ที่สุดในทะเล เจ้าของสัตว์มากเลห์นิลมังกร"
+    },
+    {
+        id: 4,
+        answer: "พระราม",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "นารายณ์อวตาร"
+    },
+    {
+        id: 5,
+        answer: "มัทนา",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "ตำนานรักดอกกุหลาบ"
+    },
+    {
+        id: 6,
+        answer: "วันทอง",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "หญิงงามแห่งสุพรรณบุรี ชื่อเก่าคือพิมพิลาไลย"
+    },
+    {
+        id: 7,
+        answer: "ม้านิลมังกร",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "เขี้ยวเป็นเพชร เกล็ดเป็นนิล ลิ้นเป็นปาน"
+    },
+    {
+        id: 8,
+        answer: "ไกรทอง",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "ผู้ปราบจระเข้"
+    },
+    {
+        id: 9,
+        answer: "พระอภัยมณี",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "Sorry Monk"
+    },
+    {
+        id: 10,
+        answer: "ปลาบู่ทอง",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "ตายไม่จริง สิงร่างปลา โดนฆ่าแกง"
+    },
+    {
+        id: 11,
+        answer: "พระลอ",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "คนหล่อตามไก่"
+    },
+    {
+        id: 12,
+        answer: "สีดา",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "ต้นฉบับการลุยไฟ"
+    },
+    {
+        id: 13,
+        answer: "ช้างเอราวัณ",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "สัตว์สี่ขา แต่ว่ามี 33 หัว"
+    },
+    {
+        id: 14,
+        answer: "บุษบา",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "หญิงงามผู้เสี่ยงเทียนเลือกคู่"
+    },
+    {
+        id: 15,
+        answer: "นนทก",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "นิ้วเพชร"
+    },
+    {
+        id: 16,
+        answer: "อิเหนา",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "ว่าแต่เขา...เป็นเอง"
+    },
+    {
+        id: 17,
+        answer: "ขุนแผน",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "เข้าคุก>ออกคุกไปรบ>ปีนบ้านขุนนาง>ร่ายมนตร์>มีเมียเพิ่ม>เข้าคุก"
+    },
+    {
+        id: 18,
+        answer: "พลายงาม", "จมื่นไวย", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "เหมือนพ่อ"
+    },
+    {
+        id: 19,
+        answer: "ไมยราพ", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "ถอดดวงใจเป็นแมลงภู่"
+    },
+    {
+        id: 20,
+        answer: "พระเพื่อน พระแพง", "พระเพื่อนพระแพง", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
+        hint: "เหมือนพ่อ"
     }
 ];
 
