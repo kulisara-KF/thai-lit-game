@@ -132,28 +132,42 @@ const questions = [
         id: 20,
         answers: ["พระเพื่อน พระแพง", "พระเพื่อนพระแพง"], 
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
-        hint: "เหมือนพ่อ"
+        hint: "สองแฝดหญิงที่หลงรักพระลอ"
     }
 ];
 
 let currentQuestionIndex = 0;
 let players = {};
 let correctCount = 0;
+let prevRankingsSnapshot = []; // บันทึกอันดับก่อนตอบคำถาม
+
+// ฟังก์ชันจัดอันดับผู้เล่นทั้งหมด
+function getSortedPlayers() {
+    return Object.entries(players)
+        .map(([id, p]) => ({ id, name: p.name, score: p.score, prevRank: p.prevRank || 999 }))
+        .sort((a, b) => b.score - a.score);
+}
 
 io.on('connection', (socket) => {
     socket.on('joinGame', (data) => {
-        players[socket.id] = { name: data.playerName, score: 0, answered: false };
+        players[socket.id] = { name: data.playerName, score: 0, answered: false, prevRank: 999 };
         io.emit('updatePlayerCount', Object.keys(players).length);
         broadcastLeaderboard();
     });
 
     socket.on('startNextQuestion', () => {
         correctCount = 0;
+        
+        // บันทึกอันดับเดิมของทุกคนไว้ก่อนเริ่มข้อใหม่
+        const sorted = getSortedPlayers();
+        prevRankingsSnapshot = [...sorted];
+        sorted.forEach((p, idx) => {
+            if (players[p.id]) players[p.id].prevRank = idx + 1;
+        });
+
         Object.keys(players).forEach(id => players[id].answered = false);
 
         const qData = questions[currentQuestionIndex];
-        
-        // 📌 นับกล่องโดยอิงจาก "คำตอบแรก" ใน Array (answers[0])
         const charBoxesCount = Array.from(qData.answers[0]).length;
         
         io.emit('loadQuestionHost', {
@@ -175,10 +189,8 @@ io.on('connection', (socket) => {
 
     socket.on('showAnswer', () => {
         const qData = questions[currentQuestionIndex];
-        // 📌 เวลาเฉลย ให้นำคำตอบทั้งหมดมาต่อกันด้วยคำว่า " หรือ "
         const revealedText = qData.answers.join(" หรือ ");
         io.emit('answerRevealed', revealedText);
-        
         currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
     });
 
@@ -188,19 +200,70 @@ io.on('connection', (socket) => {
 
         player.answered = true;
         const currentQ = questions[currentQuestionIndex];
+        const isCorrect = currentQ.answers.includes(data.answer.trim());
 
-        // 📌 เช็กว่าคำตอบที่เด็กส่งมา อยู่ใน Array answers หรือไม่ (.includes)
-        if (currentQ.answers.includes(data.answer.trim())) {
+        let scoreGained = 0;
+        let effect = { text: "🎯 คะแนนปกติ", color: "#3498db", type: "normal" };
+
+        if (isCorrect) {
             correctCount++;
-            const scoreGained = Math.max(100, 1000 - (data.timeUsed * 20));
-            player.score += scoreGained;
+            const baseScore = Math.max(100, 1000 - (data.timeUsed * 20));
+            
+            // 🎲 ระบบสุ่มโบนัสพิเศษ (Random Multipliers)
+            const rand = Math.random() * 100;
+            if (rand < 15) {
+                effect = { text: "🔥 Critical x2!", color: "#e74c3c", type: "crit" };
+                scoreGained = baseScore * 2;
+            } else if (rand < 35) {
+                effect = { text: "⚡ Super Speed x1.5!", color: "#f39c12", type: "speed" };
+                scoreGained = Math.floor(baseScore * 1.5);
+            } else if (rand < 50) {
+                effect = { text: "🎁 Lucky Bonus +300!", color: "#9b59b6", type: "bonus" };
+                scoreGained = baseScore + 300;
+            } else {
+                scoreGained = baseScore;
+            }
 
-            socket.emit('answerResult', { correct: true, scoreGained, currentScore: player.score });
+            player.score += scoreGained;
             io.emit('updateCorrectCount', correctCount);
-            broadcastLeaderboard();
         } else {
-            socket.emit('answerResult', { correct: false, currentScore: player.score });
+            // 💣 สุ่มโอกาสโดนกับดักหักคะแนน 25% เมื่อตอบผิด
+            const rand = Math.random() * 100;
+            if (rand < 25) {
+                effect = { text: "💣 เจอระเบิด -100!", color: "#c0392b", type: "trap" };
+                scoreGained = -100;
+                player.score = Math.max(0, player.score + scoreGained);
+            }
         }
+
+        // 📊 คำนวณอันดับใหม่ และเช็กว่า "แซงใครมา" (Kahoot Style)
+        const updatedSorted = getSortedPlayers();
+        const newRankIndex = updatedSorted.findIndex(p => p.id === socket.id);
+        const newRank = newRankIndex + 1;
+        const oldRank = player.prevRank || updatedSorted.length;
+
+        let passedPlayerName = null;
+        if (newRank < oldRank) {
+            // ดึงชื่อคนที่เคยอยู่อันดับเหนือเราใน snapshot เดิม
+            const surpassedPlayer = prevRankingsSnapshot[newRankIndex];
+            if (surpassPlayer && surpassedPlayer.id !== socket.id) {
+                passedPlayerName = surpassedPlayer.name;
+            }
+        }
+
+        // ส่งผลลัพธ์แบบจัดเต็มกลับไปที่หน้าจอนักเรียน
+        socket.emit('answerResult', {
+            correct: isCorrect,
+            scoreGained: scoreGained,
+            currentScore: player.score,
+            rank: newRank,
+            oldRank: oldRank,
+            rankUp: oldRank - newRank,
+            passedPlayer: passedPlayerName,
+            effect: effect
+        });
+
+        broadcastLeaderboard();
     });
 
     socket.on('disconnect', () => {
