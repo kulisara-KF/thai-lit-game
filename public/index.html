@@ -3,52 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ฉันมาเพื่อท้าทาย</title>
-    <title>วันภาษาไทย โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</title>
+    <title>เข้าเล่นเกมวรรณคดีไทย</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background: #f0f2f5; text-align: center; margin: 0; padding: 20px; }
-        .card { background: white; max-width: 400px; margin: 20px auto; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; text-align: center; }
-        button { width: 100%; background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; font-size: 18px; border-radius: 8px; margin-top: 10px;}
-        button:disabled { background: #cccccc; }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap');
         
-        .status-msg { font-size: 18px; font-weight: bold; margin-top: 15px; min-height: 25px;}
-        .correct { color: #27ae60; }
-        .wrong { color: #c0392b; }
+        body { font-family: 'Kanit', sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 15px; }
+        .card { background: #1e293b; max-width: 420px; margin: 10px auto; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        
+        /* แถบข้อมูลผู้เล่นด้านบน */
+        .player-bar { display: flex; justify-content: space-between; align-items: center; background: #334155; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; }
+        .rank-badge { background: #f59e0b; color: #0f172a; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 16px; }
 
+        input[type="text"] { width: 100%; padding: 14px; margin: 10px 0; font-size: 18px; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: white; text-align: center; box-sizing: border-box; }
+        input[type="text"]:focus { border-color: #3b82f6; outline: none; }
+        
+        button { width: 100%; background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; padding: 16px; font-size: 20px; border-radius: 12px; margin-top: 10px; box-shadow: 0 4px 0 #1d4ed8; transition: 0.1s; }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        button:disabled { background: #475569; box-shadow: none; cursor: not-allowed; }
+
+        /* UI กล่องตัวอักษร */
         .box-container { display: flex; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap;}
-        .char-box { width: 30px; height: 40px; border: 2px solid #3498db; border-radius: 6px; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; background: #fdfdfd; color: #333;}
-        .char-box.filled { background: #ebf5fb; border-color: #2980b9; }
+        .char-box { width: 32px; height: 42px; border: 2px solid #3b82f6; border-radius: 6px; font-size: 22px; font-weight: bold; display: flex; justify-content: center; align-items: center; background: #0f172a; color: #38bdf8;}
+        .char-box.filled { background: #1e3a8a; border-color: #60a5fa; color: white; }
+
+        /* การ์ดผลลัพธ์คะแนนสุดตื่นตาตื่นใจ */
+        .result-screen { display: none; margin-top: 15px; padding: 15px; border-radius: 15px; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .result-screen.correct-bg { background: linear-gradient(135deg, #065f46, #047857); border: 2px solid #10b981; }
+        .result-screen.wrong-bg { background: linear-gradient(135deg, #991b1b, #b91c1c); border: 2px solid #f87171; }
+
+        .score-anim { font-size: 42px; font-weight: 800; margin: 5px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .effect-tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 16px; font-weight: bold; background: rgba(0,0,0,0.4); margin-bottom: 10px; }
+
+        /* แบนเนอร์ Kahoot แซงอันดับ */
+        .overtake-banner { background: #fbbf24; color: #78350f; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 16px; margin-top: 10px; animation: bounce 0.6s infinite alternate; }
+
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-5px); } }
     </style>
 </head>
 <body>
     <div class="card" id="login-box">
-        <h2>⚔️ แฟนพันธุ์แท้ตัวละครในวรรณคดี</h2>
-        <input type="text" id="player-name" placeholder="กรอกชื่อ..." required>
-        <button onclick="joinGame()">ท้าทายเกม</button>
+        <h2>⚔️ วรรณคดีแฟนพันธุ์แท้</h2>
+        <input type="text" id="player-name" placeholder="กรอกชื่อของคุณ..." required>
+        <button onclick="joinGame()">🚀 เข้าสู่ห้องเกม</button>
     </div>
 
     <div class="card" id="game-box" style="display: none;">
-        <h3>ผู้เล่น: <span id="my-name"></span></h3>
-        <h2>คะแนนสะสม: <span id="my-score" style="color:#e67e22;">0</span></h2>
-        <hr>
-        <p id="question-title">กำลังจะเริ่มเร็ว ๆ นี้</p>
+        <div class="player-bar">
+            <div>👤 <span id="my-name"></span></div>
+            <div class="rank-badge" id="my-rank-badge">อันดับ -</div>
+            <div>🏆 <span id="my-score" style="color:#f59e0b; font-weight:bold;">0</span> pt</div>
+        </div>
+
+        <p id="question-title" style="font-size: 18px; color: #94a3b8;">รอครูเริ่มข้อสอบ...</p>
         
-        <!-- กล่องแสดงตัวอักษร -->
         <div class="box-container" id="char-boxes"></div>
-        
-        <!-- ช่องพิมพ์จริง -->
-        <input type="text" id="answer-input" placeholder="พิมพ์ชื่อตัวละคร..." disabled oninput="updateBoxes()">
-        
-        <button id="send-btn" onclick="submitAnswer()" disabled>ส่งคำตอบ</button>
-        <div id="result-msg" class="status-msg"></div>
+        <input type="text" id="answer-input" placeholder="พิมพ์คำตอบที่นี่..." disabled oninput="updateBoxes()">
+        <button id="send-btn" onclick="submitAnswer()" disabled>ส่งคำตอบ ⚡</button>
+
+        <!-- ผลลัพธ์คะแนนเรียลไทม์ -->
+        <div id="result-card" class="result-screen">
+            <div id="result-status" style="font-size: 22px; font-weight: bold;"></div>
+            <div id="effect-tag" class="effect-tag"></div>
+            <div id="score-gained" class="score-anim"></div>
+            <div id="overtake-msg"></div>
+        </div>
     </div>
 
     <script>
         const socket = io();
         let startTime = 0;
-        let expectedBoxes = 0;
+
+        // --- ระบบเสียงประกอบบนมือถือผู้เล่น ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playPlayerSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if(type === 'win') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if(type === 'lose') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
 
         function joinGame() {
             const name = document.getElementById('player-name').value.trim();
@@ -60,12 +111,9 @@
             }
         }
 
-        // 📌 ฟังก์ชันตัดคำแบบแยกชิ้น (พยัญชนะ สระ วรรณยุกต์ แยกกันคนละช่อง)
         function updateBoxes() {
             const text = document.getElementById('answer-input').value.trim();
             const boxes = document.querySelectorAll('.char-box');
-            
-            // แตกสตริงออกเป็นอาร์เรย์ของแต่ละอักขระ
             const chars = Array.from(text);
 
             boxes.forEach((box, i) => {
@@ -88,8 +136,14 @@
 
             document.getElementById('answer-input').disabled = true;
             document.getElementById('send-btn').disabled = true;
-            document.getElementById('result-msg').className = "status-msg";
-            document.getElementById('result-msg').innerText = "⏳ ส่งคำตอบแล้ว รอเฉลย...";
+            
+            const resCard = document.getElementById('result-card');
+            resCard.style.display = 'block';
+            resCard.className = 'result-screen';
+            document.getElementById('result-status').innerText = "⏳ ส่งคำตอบแล้ว...";
+            document.getElementById('effect-tag').innerText = "รอตรวจผลลัพธ์";
+            document.getElementById('score-gained').innerText = "...";
+            document.getElementById('overtake-msg').innerHTML = "";
         }
 
         socket.on('loadQuestionPlayer', (data) => {
@@ -98,43 +152,63 @@
             input.value = '';
             input.disabled = false;
             document.getElementById('send-btn').disabled = false;
-            document.getElementById('result-msg').innerText = '';
+            document.getElementById('result-card').style.display = 'none';
             
-            expectedBoxes = data.boxesCount;
             const container = document.getElementById('char-boxes');
             container.innerHTML = '';
-            for(let i = 0; i < expectedBoxes; i++) {
+            for(let i = 0; i < data.boxesCount; i++) {
                 container.innerHTML += `<div class="char-box"></div>`;
             }
 
             startTime = Date.now();
         });
 
-        socket.on('answerRevealed', (answer) => {
-            document.getElementById('answer-input').disabled = true;
-            document.getElementById('send-btn').disabled = true;
-            const msgBox = document.getElementById('result-msg');
-            if (msgBox.innerText === "⏳ ส่งคำตอบแล้ว รอเฉลย..." || msgBox.innerText === "") {
-                 msgBox.innerText = `หมดเวลา! เฉลยคือ: ${answer}`;
+        // 🏆 รับผลลัพธ์คะแนน + อันดับ + เอฟเฟกต์การแซง
+        socket.on('answerResult', (data) => {
+            document.getElementById('my-score').innerText = data.currentScore;
+            document.getElementById('my-rank-badge').innerText = `อันดับที่ ${data.rank}`;
+
+            const resCard = document.getElementById('result-card');
+            const statusBox = document.getElementById('result-status');
+            const effectTag = document.getElementById('effect-tag');
+            const scoreBox = document.getElementById('score-gained');
+            const overtakeBox = document.getElementById('overtake-msg');
+
+            resCard.style.display = 'block';
+            effectTag.innerText = data.effect.text;
+            effectTag.style.color = data.effect.color;
+
+            if(data.correct) {
+                resCard.className = "result-screen correct-bg";
+                statusBox.innerText = "🎉 ตอบถูกต้อง!";
+                scoreBox.innerText = `+${data.scoreGained} pt`;
+                playSound('win');
+
+                if (data.effect.type === 'crit' || data.rank <= 3) {
+                    confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
+                }
+            } else {
+                resCard.className = "result-screen wrong-bg";
+                statusBox.innerText = "❌ ตอบไม่ถูกต้อง!";
+                scoreBox.innerText = data.scoreGained < 0 ? `${data.scoreGained} pt` : `+0 pt`;
+                playSound('lose');
+            }
+
+            // 🔥 แบนเนอร์แสดงการแซงอันดับแบบ Kahoot
+            if(data.rankUp > 0) {
+                let msg = `🚀 พุ่งขึ้นมา +${data.rankUp} อันดับ!`;
+                if(data.passedPlayer) {
+                    msg = `⚡ คุณแซงคุณ "${data.passedPlayer}" ขึ้นมาแล้ว! (+${data.rankUp} อันดับ)`;
+                }
+                overtakeBox.innerHTML = `<div class="overtake-banner">${msg}</div>`;
+            } else {
+                overtakeBox.innerHTML = "";
             }
         });
 
-        socket.on('answerResult', (data) => {
-            const msgBox = document.getElementById('result-msg');
-            document.getElementById('my-score').innerText = data.currentScore;
-
-            if(data.correct) {
-                msgBox.className = "status-msg correct";
-                msgBox.innerText = `✅ ตอบถูกต้อง! (+${data.scoreGained} คะแนน)`;
-            } else {
-                msgBox.className = "status-msg wrong";
-                msgBox.innerText = "❌ คำตอบยังไม่ถูกต้อง!";
-                
-                const container = document.getElementById('char-boxes');
-                container.style.transform = "translateX(10px)";
-                setTimeout(() => container.style.transform = "translateX(-10px)", 100);
-                setTimeout(() => container.style.transform = "translateX(0)", 200);
-            }
+        socket.on('answerRevealed', (answer) => {
+            document.getElementById('answer-input').disabled = true;
+            document.getElementById('send-btn').disabled = true;
         });
     </script>
 </body>
