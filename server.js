@@ -112,9 +112,9 @@ const questions = [
     },
     {
         id: 17,
-        answer: "ขุนแผน",
+        answer: "ขุนช้าง",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
-        hint: "เข้าคุก>ออกคุกไปรบ>ปีนบ้านขุนนาง>ร่ายมนตร์>มีเมียเพิ่ม>เข้าคุก"
+        hint: "เมียเขาเรารัก"
     },
     {
         id: 18,
