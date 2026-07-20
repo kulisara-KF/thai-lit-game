@@ -140,10 +140,9 @@ let currentQuestionIndex = 0;
 let players = {};
 let correctCount = 0;
 let prevRankingsSnapshot = [];
-
-// ⏱️ ตัวแปรระบบเวลา
 let timeLeft = 30;
 let timerInterval = null;
+let isQuestionActive = false;
 
 function getSortedPlayers() {
     return Object.entries(players)
@@ -153,7 +152,8 @@ function getSortedPlayers() {
 
 function startTimer() {
     clearInterval(timerInterval);
-    timeLeft = 30; // รีเซ็ตเวลาเริ่มต้นที่ 30 วินาที
+    timeLeft = 30;
+    isQuestionActive = true;
     io.emit('timerUpdate', timeLeft);
 
     timerInterval = setInterval(() => {
@@ -162,17 +162,19 @@ function startTimer() {
 
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            revealAnswerLogic(); // หมดเวลาเฉลยให้อัตโนมัติ
+            revealAnswerLogic();
         }
     }, 1000);
 }
 
 function revealAnswerLogic() {
     clearInterval(timerInterval);
+    isQuestionActive = false;
     const qData = questions[currentQuestionIndex];
+    if (!qData) return;
+    
     const revealedText = qData.answers.join(" หรือ ");
     io.emit('answerRevealed', revealedText);
-    currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
 }
 
 io.on('connection', (socket) => {
@@ -183,8 +185,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('startNextQuestion', () => {
+        if (isQuestionActive) {
+            currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+        }
+
         correctCount = 0;
-        
         const sorted = getSortedPlayers();
         prevRankingsSnapshot = [...sorted];
         sorted.forEach((p, idx) => {
@@ -208,11 +213,11 @@ io.on('connection', (socket) => {
             boxesCount: charBoxesCount
         });
 
-        startTimer(); // เริ่มนับถอยหลังทันทีเมื่อเริ่มข้อใหม่
+        startTimer();
     });
 
-    // ➕ ปุ่มโฮสต์กดเพิ่มเวลา
     socket.on('addTime', (seconds) => {
+        if (!isQuestionActive) return;
         timeLeft += seconds;
         io.emit('timerUpdate', timeLeft);
     });
@@ -227,7 +232,7 @@ io.on('connection', (socket) => {
 
     socket.on('submitAnswer', (data) => {
         const player = players[socket.id];
-        if (!player || player.answered) return;
+        if (!player || player.answered || !isQuestionActive) return;
 
         player.answered = true;
         const currentQ = questions[currentQuestionIndex];
