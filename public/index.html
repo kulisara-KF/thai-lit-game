@@ -8,12 +8,17 @@
     <style>
         body { font-family: 'Kanit', sans-serif; background: #f0f2f5; text-align: center; margin: 0; padding: 20px; }
         .card { background: white; max-width: 400px; margin: 20px auto; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; text-align: center; }
+        button { width: 100%; background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; font-size: 18px; border-radius: 8px; margin-top: 10px;}
         button:disabled { background: #cccccc; }
-        .status-msg { font-size: 18px; font-weight: bold; margin-top: 15px; }
+        
+        .status-msg { font-size: 18px; font-weight: bold; margin-top: 15px; min-height: 25px;}
         .correct { color: #27ae60; }
         .wrong { color: #c0392b; }
+
+        .box-container { display: flex; justify-content: center; gap: 4px; margin: 15px 0; flex-wrap: wrap;}
+        .char-box { width: 30px; height: 40px; border: 2px solid #3498db; border-radius: 6px; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; background: #fdfdfd; color: #333;}
+        .char-box.filled { background: #ebf5fb; border-color: #2980b9; }
     </style>
 </head>
 <body>
@@ -29,15 +34,20 @@
         <hr>
         <p id="question-title">รอครูเริ่มข้อสอบ...</p>
         
-        <input type="text" id="answer-input" placeholder="พิมพ์ชื่อตัวละครที่นี่..." disabled>
+        <!-- กล่องแสดงตัวอักษร -->
+        <div class="box-container" id="char-boxes"></div>
+        
+        <!-- ช่องพิมพ์จริง -->
+        <input type="text" id="answer-input" placeholder="พิมพ์ชื่อตัวละคร..." disabled oninput="updateBoxes()">
+        
         <button id="send-btn" onclick="submitAnswer()" disabled>ส่งคำตอบ</button>
-
         <div id="result-msg" class="status-msg"></div>
     </div>
 
     <script>
         const socket = io();
         let startTime = 0;
+        let expectedBoxes = 0;
 
         function joinGame() {
             const name = document.getElementById('player-name').value.trim();
@@ -49,6 +59,25 @@
             }
         }
 
+        // 📌 ฟังก์ชันตัดคำแบบแยกชิ้น (พยัญชนะ สระ วรรณยุกต์ แยกกันคนละช่อง)
+        function updateBoxes() {
+            const text = document.getElementById('answer-input').value.trim();
+            const boxes = document.querySelectorAll('.char-box');
+            
+            // แตกสตริงออกเป็นอาร์เรย์ของแต่ละอักขระ
+            const chars = Array.from(text);
+
+            boxes.forEach((box, i) => {
+                if(chars[i]) {
+                    box.innerText = chars[i];
+                    box.classList.add('filled');
+                } else {
+                    box.innerText = '';
+                    box.classList.remove('filled');
+                }
+            });
+        }
+
         function submitAnswer() {
             const ans = document.getElementById('answer-input').value.trim();
             if(!ans) return;
@@ -58,16 +87,35 @@
 
             document.getElementById('answer-input').disabled = true;
             document.getElementById('send-btn').disabled = true;
+            document.getElementById('result-msg').className = "status-msg";
             document.getElementById('result-msg').innerText = "⏳ ส่งคำตอบแล้ว รอเฉลย...";
         }
 
         socket.on('loadQuestionPlayer', (data) => {
-            document.getElementById('question-title').innerText = `ข้อที่ ${data.qIndex}: ดูภาพบนจอครู แล้วตอบคำถาม!`;
-            document.getElementById('answer-input').value = '';
-            document.getElementById('answer-input').disabled = false;
+            document.getElementById('question-title').innerText = `ข้อที่ ${data.qIndex}: ดูภาพบนจอครู แล้วพิมพ์คำตอบ!`;
+            const input = document.getElementById('answer-input');
+            input.value = '';
+            input.disabled = false;
             document.getElementById('send-btn').disabled = false;
             document.getElementById('result-msg').innerText = '';
+            
+            expectedBoxes = data.boxesCount;
+            const container = document.getElementById('char-boxes');
+            container.innerHTML = '';
+            for(let i = 0; i < expectedBoxes; i++) {
+                container.innerHTML += `<div class="char-box"></div>`;
+            }
+
             startTime = Date.now();
+        });
+
+        socket.on('answerRevealed', (answer) => {
+            document.getElementById('answer-input').disabled = true;
+            document.getElementById('send-btn').disabled = true;
+            const msgBox = document.getElementById('result-msg');
+            if (msgBox.innerText === "⏳ ส่งคำตอบแล้ว รอเฉลย..." || msgBox.innerText === "") {
+                 msgBox.innerText = `หมดเวลา! เฉลยคือ: ${answer}`;
+            }
         });
 
         socket.on('answerResult', (data) => {
@@ -80,6 +128,11 @@
             } else {
                 msgBox.className = "status-msg wrong";
                 msgBox.innerText = "❌ คำตอบยังไม่ถูกต้อง!";
+                
+                const container = document.getElementById('char-boxes');
+                container.style.transform = "translateX(10px)";
+                setTimeout(() => container.style.transform = "translateX(-10px)", 100);
+                setTimeout(() => container.style.transform = "translateX(0)", 200);
             }
         });
     </script>
