@@ -10,7 +10,6 @@
         
         body { font-family: 'Kanit', sans-serif; background: #0b0f19; color: white; margin: 0; padding: 20px; }
 
-        /* แถบป้ายโรงเรียนด้านบนสุด */
         .school-header { background: linear-gradient(90deg, #1e1b4b, #4338ca, #1e1b4b); padding: 15px; border-radius: 16px; text-align: center; border: 2px solid #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); margin-bottom: 20px; }
         .school-header h1 { margin: 0; font-size: 26px; color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
         .school-header h2 { margin: 5px 0 0 0; font-size: 20px; color: #e0e7ff; }
@@ -18,29 +17,22 @@
         .dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .card { background: #181e29; padding: 20px; border-radius: 20px; border: 1px solid #2a3447; }
 
-        /* ตัวนับเวลา */
-        .timer-badge { font-size: 32px; font-weight: 800; color: #ef4444; background: #291415; padding: 8px 20px; border-radius: 30px; border: 2px solid #ef4444; display: inline-block; animation: pulse 1s infinite alternate; }
-        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.05); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } }
+        .timer-badge { font-size: 32px; font-weight: 800; color: #ef4444; background: #291415; padding: 8px 20px; border-radius: 30px; border: 2px solid #ef4444; display: inline-block; }
 
-        /* ปุ่มควบคุม */
         .btn { background: #2563eb; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s; font-family: 'Kanit'; margin-right: 5px; }
         .btn:hover { transform: translateY(-2px); }
         .btn-add-time { background: #d97706; }
-        .btn-add-time:hover { background: #b45309; }
         .btn-reveal { background: #059669; }
 
-        /* แผ่นป้ายเปิดภาพ */
         .tile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 360px; height: 360px; margin: 15px auto; position: relative; background: #000; border-radius: 12px; overflow: hidden; border: 3px solid #3b82f6; }
         .main-image { position: absolute; width: 100%; height: 100%; object-fit: cover; }
         .tile { background: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 2; transition: 0.3s; }
         .tile.open { opacity: 0; pointer-events: none; }
 
-        /* 🏆 Vibrant Leaderboard UI */
-        .lb-title { text-align: center; font-size: 22px; color: #f59e0b; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .lb-title { text-align: center; font-size: 22px; color: #f59e0b; margin-top: 0; text-transform: uppercase; }
         .lb-list { display: flex; flex-direction: column; gap: 10px; }
-        .lb-item { display: flex; align-items: center; justify-content: space-between; background: #222c3d; padding: 12px 16px; border-radius: 12px; border-left: 5px solid #475569; transition: all 0.4s ease; animation: slideIn 0.3s forwards; }
+        .lb-item { display: flex; align-items: center; justify-content: space-between; background: #222c3d; padding: 12px 16px; border-radius: 12px; border-left: 5px solid #475569; }
         
-        /* ไฮไลต์ Top 3 */
         .lb-item.rank-1 { background: linear-gradient(90deg, #451a03, #222c3d); border-left-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
         .lb-item.rank-2 { background: linear-gradient(90deg, #1e293b, #222c3d); border-left-color: #94a3b8; }
         .lb-item.rank-3 { background: linear-gradient(90deg, #361309, #222c3d); border-left-color: #d97706; }
@@ -48,20 +40,16 @@
         .lb-rank { font-weight: 800; font-size: 18px; width: 30px; }
         .lb-name { font-weight: 600; font-size: 18px; flex-grow: 1; text-align: left; margin-left: 10px; }
         .lb-score { font-weight: 800; font-size: 20px; color: #38bdf8; }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
 
-    <!-- แถบป้ายโรงเรียน -->
     <div class="school-header">
         <h1>34 วัน จากวันสุนทรภู่สู่วันภาษาไทย</h1>
         <h2>โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</h2>
     </div>
 
     <div class="dashboard">
-        <!-- ฝั่งซ้าย: ตัวเกมและการเปิดภาพ -->
         <div class="card" style="text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2 id="q-number" style="margin:0;">ข้อที่ - / -</h2>
@@ -77,13 +65,11 @@
 
             <div class="tile-grid" id="tile-grid">
                 <img id="main-img" class="main-image" src="" alt="คำถาม">
-                <!-- แผ่นป้าย 16 ช่อง -->
             </div>
             
-            <p id="hint-text" style="font-size: 18px; color: #cbd5e1; background: #0f172a; padding: 10px; border-radius: 8px;">คำใบ้: -</p>
+            <p id="hint-text" style="font-size: 18px; color: #cbd5e1; background: #0f172a; padding: 10px; border-radius: 8px;">คำใบ้: กด "เริ่มข้อถัดไป" เพื่อเริ่มเกม</p>
         </div>
 
-        <!-- ฝั่งขวา: Vibrant Leaderboard -->
         <div class="card">
             <h3 class="lb-title">🏆 ตารางคะแนนเรียลไทม์</h3>
             <div class="lb-list" id="leaderboard-list">
@@ -117,10 +103,8 @@
 
         socket.on('loadQuestionHost', (data) => {
             document.getElementById('q-number').innerText = `ข้อที่ ${data.qIndex} / ${data.totalQ}`;
-            document.getElementById('main-img').src = data.image;
             document.getElementById('hint-text').innerText = `คำใบ้: ${data.hint}`;
 
-            // สร้างแผ่นป้าย 16 ช่อง
             const grid = document.getElementById('tile-grid');
             grid.innerHTML = `<img id="main-img" class="main-image" src="${data.image}">`;
             for(let i = 0; i < 16; i++) {
@@ -142,10 +126,14 @@
             document.getElementById('player-count').innerText = count;
         });
 
-        // 🏆 อัปเดต Leaderboard แบบสดใสและมีชีวิตชีวา
         socket.on('updateLeaderboard', (players) => {
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
+
+            if (players.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#64748b;">รอผู้เล่นเข้าห้อง...</p>';
+                return;
+            }
 
             players.forEach((p, i) => {
                 let rankClass = '';
