@@ -16,121 +16,121 @@ app.get('/host', (req, res) => {
 const questions = [
     {
         id: 1,
-        answer: "หนุมาน",
+        answers: ["หนุมาน"],
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "กายาสีขาว หาวเป็นดาวเป็นเดือน"
     },
     {
         id: 2,
-        answer: "ขุนแผน",
+        answers: ["ขุนแผน", "พลายแก้ว"],
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Khun_Phaen_Mural.jpg/400px-Khun_Phaen_Mural.jpg",
         hint: "ขี่ม้าสีหมอก ถือดาบฟ้าฟื้น"
     },
     {
         id: 3,
-        answer: "สุดสาคร",
+        answers: "สุดสาคร",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Sudsakorn_painting.jpg/400px-Sudsakorn_painting.jpg",
         hint: "ที่สุดในทะเล เจ้าของสัตว์มากเลห์นิลมังกร"
     },
     {
         id: 4,
-        answer: "พระราม",
+        answers: "พระราม",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "นารายณ์อวตาร"
     },
     {
         id: 5,
-        answer: "มัทนา",
+        answers: "มัทนา",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "ตำนานรักดอกกุหลาบ"
     },
     {
         id: 6,
-        answer: "วันทอง",
+        answers: "วันทอง",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "หญิงงามแห่งสุพรรณบุรี ชื่อเก่าคือพิมพิลาไลย"
     },
     {
         id: 7,
-        answer: "ม้านิลมังกร",
+        answers: "ม้านิลมังกร",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "เขี้ยวเป็นเพชร เกล็ดเป็นนิล ลิ้นเป็นปาน"
     },
     {
         id: 8,
-        answer: "ไกรทอง",
+        answers: "ไกรทอง",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "ผู้ปราบจระเข้"
     },
     {
         id: 9,
-        answer: "พระอภัยมณี",
+        answers: "พระอภัยมณี",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "Sorry Monk"
     },
     {
         id: 10,
-        answer: "ปลาบู่ทอง",
+        answers: "ปลาบู่ทอง",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "ตายไม่จริง สิงร่างปลา โดนฆ่าแกง"
     },
     {
         id: 11,
-        answer: "พระลอ",
+        answers: "พระลอ",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "คนหล่อตามไก่"
     },
     {
         id: 12,
-        answer: "สีดา",
+        answers: "สีดา",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "ต้นฉบับการลุยไฟ"
     },
     {
         id: 13,
-        answer: "ช้างเอราวัณ",
+        answers: "ช้างเอราวัณ",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "สัตว์สี่ขา แต่ว่ามี 33 หัว"
     },
     {
         id: 14,
-        answer: "บุษบา",
+        answers: "บุษบา",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "หญิงงามผู้เสี่ยงเทียนเลือกคู่"
     },
     {
         id: 15,
-        answer: "นนทก",
+        answers: "นนทก",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "นิ้วเพชร"
     },
     {
         id: 16,
-        answer: "อิเหนา",
+        answers: "อิเหนา",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "ว่าแต่เขา...เป็นเอง"
     },
     {
         id: 17,
-        answer: "ขุนช้าง",
+        answers: "ขุนช้าง",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "เมียเขาเรารัก"
     },
     {
         id: 18,
-        answer: "พลายงาม", "จมื่นไวย", 
+        answers: ["พลายงาม", "จมื่นไวย"], 
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "เหมือนพ่อ"
     },
     {
         id: 19,
-        answer: "ไมยราพ", 
+        answers: "ไมยราพ", 
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "ถอดดวงใจเป็นแมลงภู่"
     },
     {
         id: 20,
-        answer: "พระเพื่อน พระแพง", "พระเพื่อนพระแพง", 
+        answers: ["พระเพื่อน พระแพง", "พระเพื่อนพระแพง"], 
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Hanuman_at_Wat_Phra_Kaew.jpg/400px-Hanuman_at_Wat_Phra_Kaew.jpg",
         hint: "เหมือนพ่อ"
     }
@@ -153,8 +153,8 @@ io.on('connection', (socket) => {
 
         const qData = questions[currentQuestionIndex];
         
-        // 📌 นับจำนวนกล่องแยกตาม พยัญชนะ สระ วรรณยุกต์ แบบรายตัว
-        const charBoxesCount = Array.from(qData.answer).length;
+        // 📌 นับกล่องโดยอิงจาก "คำตอบแรก" ใน Array (answers[0])
+        const charBoxesCount = Array.from(qData.answers[0]).length;
         
         io.emit('loadQuestionHost', {
             qIndex: currentQuestionIndex + 1,
@@ -175,7 +175,10 @@ io.on('connection', (socket) => {
 
     socket.on('showAnswer', () => {
         const qData = questions[currentQuestionIndex];
-        io.emit('answerRevealed', qData.answer);
+        // 📌 เวลาเฉลย ให้นำคำตอบทั้งหมดมาต่อกันด้วยคำว่า " หรือ "
+        const revealedText = qData.answers.join(" หรือ ");
+        io.emit('answerRevealed', revealedText);
+        
         currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
     });
 
@@ -186,7 +189,8 @@ io.on('connection', (socket) => {
         player.answered = true;
         const currentQ = questions[currentQuestionIndex];
 
-        if (data.answer.trim() === currentQ.answer) {
+        // 📌 เช็กว่าคำตอบที่เด็กส่งมา อยู่ใน Array answers หรือไม่ (.includes)
+        if (currentQ.answers.includes(data.answer.trim())) {
             correctCount++;
             const scoreGained = Math.max(100, 1000 - (data.timeUsed * 20));
             player.score += scoreGained;
