@@ -8,12 +8,30 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap');
         
-        body { font-family: 'Kanit', sans-serif; background: #0b0f19; color: white; margin: 0; padding: 20px; }
+        body { font-family: 'Kanit', sans-serif; background: #070a12; color: white; margin: 0; padding: 20px; }
 
         .school-header { background: linear-gradient(90deg, #1e1b4b, #4338ca, #1e1b4b); padding: 15px; border-radius: 16px; text-align: center; border: 2px solid #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); margin-bottom: 20px; }
         .school-header h1 { margin: 0; font-size: 26px; color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
         .school-header h2 { margin: 5px 0 0 0; font-size: 20px; color: #e0e7ff; }
 
+        /* 👑 สไตล์หน้า Lobby เริ่มเกม */
+        .lobby-box { background: linear-gradient(145deg, #0f172a, #1e1b4b); border: 2px solid #6366f1; border-radius: 24px; padding: 40px 20px; text-align: center; max-width: 800px; margin: 20px auto; box-shadow: 0 0 40px rgba(99, 102, 241, 0.3); }
+        .lobby-title { font-size: 38px; font-weight: 800; color: #facc15; text-shadow: 0 0 15px rgba(250, 204, 21, 0.5); margin: 10px 0; }
+        .lobby-subtitle { font-size: 22px; color: #cbd5e1; margin-bottom: 25px; }
+
+        .start-btn-large { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 20px 50px; font-size: 28px; font-weight: 800; border-radius: 50px; cursor: pointer; transition: all 0.3s; font-family: 'Kanit'; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); animation: pulse 2s infinite; }
+        .start-btn-large:hover { transform: scale(1.05); background: linear-gradient(135deg, #34d399, #10b981); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .player-grid-lobby { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 25px; max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 16px; }
+        .player-chip { background: #3b82f6; color: white; padding: 8px 18px; border-radius: 20px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+
+        /* 🎮 สไตล์หน้ากระดานเกมหลัก */
         .dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .card { background: #181e29; padding: 20px; border-radius: 20px; border: 1px solid #2a3447; }
 
@@ -24,10 +42,53 @@
         .btn-add-time { background: #d97706; }
         .btn-reveal { background: #059669; }
 
-        .tile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 360px; height: 360px; margin: 15px auto; position: relative; background: #000; border-radius: 12px; overflow: hidden; border: 3px solid #3b82f6; }
-        .main-image { position: absolute; width: 100%; height: 100%; object-fit: cover; }
-        .tile { background: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 2; transition: 0.3s; }
-        .tile.open { opacity: 0; pointer-events: none; }
+        .tile-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 6px; 
+            width: 100%; 
+            max-width: 420px; 
+            aspect-ratio: 1 / 1; 
+            margin: 15px auto; 
+            position: relative; 
+            background: #020617; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            border: 4px solid #3b82f6; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        
+        .main-image { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            object-position: center; 
+            background-color: #020617;
+        }
+
+        .tile { 
+            background: #3b82f6; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 24px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            z-index: 2; 
+            transition: all 0.4s ease-in-out; 
+            user-select: none;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        .tile.open { 
+            opacity: 0; 
+            transform: scale(0.8) rotate(10deg);
+            pointer-events: none; 
+        }
 
         .lb-title { text-align: center; font-size: 22px; color: #f59e0b; margin-top: 0; text-transform: uppercase; }
         .lb-list { display: flex; flex-direction: column; gap: 10px; }
@@ -49,7 +110,22 @@
         <h2>โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</h2>
     </div>
 
-    <div class="dashboard">
+    <!-- 📌 หน้าที่ 1: หน้า LOBBY สตาร์ทเกม -->
+    <div id="lobby-screen" class="lobby-box">
+        <div style="font-size: 60px;">⚔️</div>
+        <div class="lobby-title">เกมประลองปัญญาวรรณคดีไทย</div>
+        <div class="lobby-subtitle">ผู้เล่นเข้าห้องแล้ว <span id="lobby-count" style="color:#facc15; font-weight:800;">0</span> คน</div>
+        
+        <button class="start-btn-large" onclick="triggerStartGame()">🚀 เริ่มเปิดฉากการแข่งขัน</button>
+
+        <div style="margin-top: 25px; color: #94a3b8; font-size: 16px;">ผู้เล่นที่เข้ามาแล้ว:</div>
+        <div class="player-grid-lobby" id="lobby-player-list">
+            <span style="color:#64748b;">กำลังรอผู้เล่นเข้าร่วม...</span>
+        </div>
+    </div>
+
+    <!-- 📌 หน้าที่ 2: หน้าเล่นเกมหลัก (ซ่อนไว้ก่อน) -->
+    <div id="game-screen" class="dashboard" style="display: none;">
         <div class="card" style="text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2 id="q-number" style="margin:0;">ข้อที่ - / -</h2>
@@ -81,6 +157,13 @@
     <script>
         const socket = io();
 
+        function triggerStartGame() {
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'grid';
+            socket.emit('startGameSession');
+            socket.emit('startNextQuestion');
+        }
+
         function startNextQuestion() {
             socket.emit('startNextQuestion');
         }
@@ -96,6 +179,16 @@
         function revealTile(index) {
             socket.emit('revealTile', index);
         }
+
+        socket.on('updateLobbyPlayers', (players) => {
+            document.getElementById('lobby-count').innerText = players.length;
+            const container = document.getElementById('lobby-player-list');
+            if(players.length === 0) {
+                container.innerHTML = '<span style="color:#64748b;">กำลังรอผู้เล่นเข้าร่วม...</span>';
+            } else {
+                container.innerHTML = players.map(p => `<div class="player-chip">👤 ${p}</div>`).join('');
+            }
+        });
 
         socket.on('timerUpdate', (time) => {
             document.getElementById('timer-text').innerText = time;
@@ -122,7 +215,6 @@
             if(tile) tile.classList.add('open');
         });
 
-        // เมื่อกดเฉลย ให้เปิดแผ่นป้ายทั้งหมดและแสดงเฉลย
         socket.on('answerRevealed', (answerText) => {
             const tiles = document.querySelectorAll('.tile');
             tiles.forEach(tile => tile.classList.add('open'));
