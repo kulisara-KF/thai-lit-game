@@ -136,12 +136,14 @@ const questions = [
     }
 ];
 
-let currentQuestionIndex = 0; // เริ่มที่ -1 เพื่อให้กดเริ่มครั้งแรกไปข้อที่ 1 (Index 0)
+
+let currentQuestionIndex = -1;
 let players = {};
 let correctCount = 0;
 let prevRankingsSnapshot = [];
 let timeLeft = 30;
 let timerInterval = null;
+let tileInterval = null;
 let isQuestionActive = false;
 
 function getSortedPlayers() {
@@ -161,14 +163,28 @@ function startTimer() {
         io.emit('timerUpdate', timeLeft);
 
         if (timeLeft <= 0) {
-            clearInterval(timerInterval);
             revealAnswerLogic();
         }
     }, 1000);
 }
 
+function startAutoTileReveal() {
+    clearInterval(tileInterval);
+    let unrevealedTiles = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
+
+    tileInterval = setInterval(() => {
+        if (unrevealedTiles.length > 0 && isQuestionActive) {
+            const tileIndex = unrevealedTiles.pop();
+            io.emit('tileRevealed', tileIndex);
+        } else {
+            clearInterval(tileInterval);
+        }
+    }, 1500);
+}
+
 function revealAnswerLogic() {
     clearInterval(timerInterval);
+    clearInterval(tileInterval);
     isQuestionActive = false;
     
     if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) return;
@@ -180,11 +196,21 @@ function revealAnswerLogic() {
     io.emit('answerRevealed', revealedText);
 }
 
+function broadcastPlayerList() {
+    const playerList = Object.values(players).map(p => p.name);
+    io.emit('updateLobbyPlayers', playerList);
+    io.emit('updatePlayerCount', playerList.length);
+}
+
 io.on('connection', (socket) => {
     socket.on('joinGame', (data) => {
         players[socket.id] = { name: data.playerName, score: 0, answered: false, prevRank: 999 };
-        io.emit('updatePlayerCount', Object.keys(players).length);
+        broadcastPlayerList();
         broadcastLeaderboard();
+    });
+
+    socket.on('startGameSession', () => {
+        io.emit('gameStartedByHost');
     });
 
     socket.on('startNextQuestion', () => {
@@ -215,6 +241,7 @@ io.on('connection', (socket) => {
         });
 
         startTimer();
+        startAutoTileReveal();
     });
 
     socket.on('addTime', (seconds) => {
@@ -300,7 +327,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         delete players[socket.id];
-        io.emit('updatePlayerCount', Object.keys(players).length);
+        broadcastPlayerList();
         broadcastLeaderboard();
     });
 });
