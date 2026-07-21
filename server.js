@@ -132,11 +132,11 @@ const questions = [
         id: 20,
         answers: ["พระเพื่อน พระแพง", "พระเพื่อนพระแพง"], 
         image: "/images/20.jpg",
-        hint: "แฝดที่ "ลอ" เธอคนเดียว"
+        hint: "แฝดที่ ลอ เธอคนเดียว"
     }
 ];
 
-let currentQuestionIndex = -1; // เริ่มที่ -1 เพื่อให้กดเริ่มครั้งแรกไปข้อที่ 1 (Index 0)
+let currentQuestionIndex = 0; // เริ่มที่ -1 เพื่อให้กดเริ่มครั้งแรกไปข้อที่ 1 (Index 0)
 let players = {};
 let correctCount = 0;
 let prevRankingsSnapshot = [];
