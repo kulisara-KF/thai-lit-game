@@ -381,7 +381,7 @@ io.on('connection', (socket) => {
 
 // 📌 4. เริ่มต้นเซิร์ฟเวอร์ที่ Port 3000
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`=================================`);
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📱 Host Screen: http://localhost:${PORT}/host.html`);
