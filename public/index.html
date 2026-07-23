@@ -11,9 +11,11 @@
         
         body { font-family: 'Kanit', sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; padding: 15px; }
         
-        .school-header { background: linear-gradient(90deg, #1e1b4b, #4338ca, #1e1b4b); padding: 12px; border-radius: 14px; text-align: center; border: 2px solid #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); margin-bottom: 15px; }
+        .school-header { position: relative; background: linear-gradient(90deg, #1e1b4b, #4338ca, #1e1b4b); padding: 12px; border-radius: 14px; text-align: center; border: 2px solid #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); margin-bottom: 15px; }
         .school-header h1 { margin: 0; font-size: 18px; color: #facc15; }
         .school-header h2 { margin: 3px 0 0 0; font-size: 14px; color: #e0e7ff; }
+
+        .audio-toggle-btn { position: absolute; right: 10px; top: 10px; background: rgba(255,255,255,0.1); border: 1px solid #6366f1; color: white; padding: 4px 10px; border-radius: 15px; cursor: pointer; font-family: 'Kanit'; font-size: 12px; }
 
         .card { background: #1e293b; max-width: 420px; margin: 0 auto; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
         
@@ -52,7 +54,7 @@
         .effect-tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 16px; font-weight: bold; background: rgba(0,0,0,0.4); margin-bottom: 10px; }
         .overtake-banner { background: #fbbf24; color: #78350f; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 16px; margin-top: 10px; }
 
-        /* โพเดียมฝั่งผู้เล่น */
+        /* PODIUM PLAYER */
         .podium-player-box { background: #0f172a; padding: 20px; border-radius: 20px; border: 2px solid #facc15; }
         .podium-stage-p { display: flex; justify-content: center; align-items: flex-end; gap: 10px; height: 200px; margin: 20px 0; }
         .step-p { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; border-radius: 12px 12px 0 0; padding: 10px 2px; }
@@ -66,6 +68,7 @@
     <div class="school-header">
         <h1>34 วัน จากวันสุนทรภู่สู่วันภาษาไทย</h1>
         <h2>โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</h2>
+        <button class="audio-toggle-btn" id="audio-btn-p" onclick="toggleAudio()">🔊 เสียง: เปิด</button>
     </div>
 
     <!-- 📌 LOBBY LOGIN -->
@@ -120,38 +123,117 @@
     <script>
         const socket = io();
         let startTime = 0;
+        let soundEnabled = true;
 
-        function playSound(type) {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) return;
-                const audioCtx = new AudioCtx();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === 'win') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'lose') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
+        // 🎵 WEB AUDIO SYNTHESIZER FOR PLAYER
+        const SoundFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 }
-            } catch (e) { console.log(e); }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playClick() {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            },
+            playCorrect() {
+                if (!soundEnabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, now + idx * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.25, now + idx * 0.08 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.25);
+                });
+            },
+            playWrong() {
+                if (!soundEnabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.35);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            },
+            playCrit() {
+                if (!soundEnabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, now + idx * 0.05);
+                    gain.gain.linearRampToValueAtTime(0.3, now + idx * 0.05 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.3);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.05);
+                    osc.stop(now + idx * 0.05 + 0.3);
+                });
+            },
+            playFanfare() {
+                if (!soundEnabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const melody = [
+                    { f: 392.00, d: 0.15, t: 0 },
+                    { f: 523.25, d: 0.15, t: 0.15 },
+                    { f: 659.25, d: 0.15, t: 0.30 },
+                    { f: 783.99, d: 0.40, t: 0.45 },
+                    { f: 659.25, d: 0.15, t: 0.90 },
+                    { f: 783.99, d: 0.60, t: 1.05 }
+                ];
+                melody.forEach(n => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = n.f;
+                    gain.gain.setValueAtTime(0.3, now + n.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now + n.t);
+                    osc.stop(now + n.t + n.d);
+                });
+            }
+        };
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('audio-btn-p');
+            btn.innerText = soundEnabled ? '🔊 เสียง: เปิด' : '🔇 เสียง: ปิด';
         }
 
         function joinGame() {
+            SoundFX.playClick();
             const name = document.getElementById('player-name').value.trim();
             if(name) {
                 socket.emit('joinGame', { playerName: name });
@@ -179,6 +261,7 @@
         }
 
         function submitAnswer() {
+            SoundFX.playClick();
             const ans = document.getElementById('answer-input').value.trim();
             if(!ans) return;
 
@@ -239,7 +322,13 @@
                 resCard.className = "result-screen correct-bg";
                 statusBox.innerText = "🎉 ตอบถูกต้อง!";
                 scoreBox.innerText = `+${data.scoreGained} pt`;
-                playSound('win');
+
+                if (data.effect.type === 'crit' || data.effect.type === 'bonus') {
+                    SoundFX.playCrit();
+                } else {
+                    SoundFX.playCorrect();
+                }
+
                 if (typeof confetti === 'function' && (data.effect.type === 'crit' || data.rank <= 3)) {
                     confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
                 }
@@ -247,7 +336,7 @@
                 resCard.className = "result-screen wrong-bg";
                 statusBox.innerText = "❌ ตอบไม่ถูกต้อง!";
                 scoreBox.innerText = data.scoreGained < 0 ? `${data.scoreGained} pt` : `+0 pt`;
-                playSound('lose');
+                SoundFX.playWrong();
             }
 
             if(data.rankUp > 0) {
@@ -261,7 +350,6 @@
             }
         });
 
-        // 📌 แสดงเฉลยชัดเจนบนหน้าจอผู้เล่น
         socket.on('answerRevealed', (data) => {
             document.getElementById('answer-input').disabled = true;
             document.getElementById('send-btn').disabled = true;
@@ -277,10 +365,11 @@
             document.getElementById('score-gained').style.fontSize = "26px";
         });
 
-        // 🏆 หน้าโพเดียมฝั่งผู้เล่น
         socket.on('gameEnded', (data) => {
             document.getElementById('game-box').style.display = 'none';
             document.getElementById('podium-box-player').style.display = 'block';
+
+            SoundFX.playFanfare();
 
             const top5 = data.top5;
             const p1 = top5[0] || { name: '-', score: 0 };
