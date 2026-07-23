@@ -11,9 +11,11 @@
         
         body { font-family: 'Kanit', sans-serif; background: #070a12; color: white; margin: 0; padding: 20px; }
 
-        .school-header { background: linear-gradient(90deg, #1e1b4b, #4338ca, #1e1b4b); padding: 15px; border-radius: 16px; text-align: center; border: 2px solid #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); margin-bottom: 20px; }
+        .school-header { position: relative; background: linear-gradient(90deg, #1e1b4b, #4338ca, #1e1b4b); padding: 15px; border-radius: 16px; text-align: center; border: 2px solid #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.4); margin-bottom: 20px; }
         .school-header h1 { margin: 0; font-size: 26px; color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
         .school-header h2 { margin: 5px 0 0 0; font-size: 20px; color: #e0e7ff; }
+
+        .audio-toggle-btn { position: absolute; right: 15px; top: 15px; background: rgba(255,255,255,0.1); border: 1px solid #6366f1; color: white; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-family: 'Kanit'; font-size: 14px; }
 
         /* LOBBY */
         .lobby-box { background: linear-gradient(145deg, #0f172a, #1e1b4b); border: 2px solid #6366f1; border-radius: 24px; padding: 40px 20px; text-align: center; max-width: 800px; margin: 20px auto; box-shadow: 0 0 40px rgba(99, 102, 241, 0.3); }
@@ -104,7 +106,7 @@
         .lb-name { font-weight: 600; font-size: 18px; flex-grow: 1; text-align: left; margin-left: 10px; }
         .lb-score { font-weight: 800; font-size: 20px; color: #38bdf8; }
 
-        /* 🏆 สไตล์หน้าโพเดียม 1-5 */
+        /* PODIUM */
         .podium-box { max-width: 900px; margin: 20px auto; background: #0f172a; padding: 30px; border-radius: 24px; border: 2px solid #facc15; box-shadow: 0 0 50px rgba(250, 204, 21, 0.3); text-align: center; }
         .podium-title { font-size: 36px; font-weight: 800; color: #facc15; margin-bottom: 20px; text-shadow: 0 0 15px rgba(250, 204, 21, 0.5); }
         
@@ -128,6 +130,7 @@
     <div class="school-header">
         <h1>34 วัน จากวันสุนทรภู่สู่วันภาษาไทย</h1>
         <h2>โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</h2>
+        <button class="audio-toggle-btn" id="audio-btn" onclick="toggleAudio()">🔊 เสียง: เปิด</button>
     </div>
 
     <!-- 📌 LOBBY -->
@@ -144,7 +147,7 @@
         </div>
     </div>
 
-    <!-- 📌 GAME SCREEN -->
+    <!-- 📌 GAME BOARD -->
     <div id="game-screen" class="dashboard" style="display: none;">
         <div class="card" style="text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -174,7 +177,7 @@
         </div>
     </div>
 
-    <!-- 📌 PODIUM SCREEN (1-5) -->
+    <!-- 📌 PODIUM SCREEN -->
     <div id="podium-screen" class="podium-box" style="display: none;">
         <div class="podium-title">🏆 สรุปผลการแข่งขัน 5 อันดับยอดเยี่ยม 🏆</div>
         
@@ -189,7 +192,91 @@
     <script>
         const socket = io();
 
+        // 🎵 WEB AUDIO SYNTHESIZER ENGINE (ไม่ต้องใช้ไฟล์ .mp3 ภายนอก)
+        let soundEnabled = true;
+        const SoundFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playClick() {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            },
+            playTileOpen() {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+            },
+            playTick(isUrgent = false) {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                const freq = isUrgent ? 900 : 500;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(isUrgent ? 0.25 : 0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.08);
+            },
+            playFanfare() {
+                if (!soundEnabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const melody = [
+                    { f: 392.00, d: 0.15, t: 0 },
+                    { f: 523.25, d: 0.15, t: 0.15 },
+                    { f: 659.25, d: 0.15, t: 0.30 },
+                    { f: 783.99, d: 0.40, t: 0.45 },
+                    { f: 659.25, d: 0.15, t: 0.90 },
+                    { f: 783.99, d: 0.60, t: 1.05 }
+                ];
+                melody.forEach(n => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = n.f;
+                    gain.gain.setValueAtTime(0.3, now + n.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now + n.t);
+                    osc.stop(now + n.t + n.d);
+                });
+            }
+        };
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('audio-btn');
+            btn.innerText = soundEnabled ? '🔊 เสียง: เปิด' : '🔇 เสียง: ปิด';
+        }
+
         function triggerStartGame() {
+            SoundFX.playClick();
             const btn = document.getElementById('btn-start-game');
             btn.disabled = true;
             document.getElementById('lobby-screen').style.display = 'none';
@@ -199,6 +286,7 @@
         }
 
         function startNextQuestion() {
+            SoundFX.playClick();
             const btn = document.getElementById('btn-next-q');
             btn.disabled = true;
             socket.emit('startNextQuestion');
@@ -206,10 +294,12 @@
         }
 
         function addTime(seconds) {
+            SoundFX.playClick();
             socket.emit('addTime', seconds);
         }
 
         function showAnswer() {
+            SoundFX.playClick();
             socket.emit('showAnswer');
         }
 
@@ -229,6 +319,11 @@
 
         socket.on('timerUpdate', (time) => {
             document.getElementById('timer-text').innerText = time;
+            if(time <= 5 && time > 0) {
+                SoundFX.playTick(true);
+            } else if (time > 5 && time % 5 === 0) {
+                SoundFX.playTick(false);
+            }
         });
 
         socket.on('loadQuestionHost', (data) => {
@@ -249,7 +344,10 @@
 
         socket.on('tileRevealed', (tileIndex) => {
             const tile = document.getElementById(`tile-${tileIndex}`);
-            if(tile) tile.classList.add('open');
+            if(tile && !tile.classList.contains('open')) {
+                tile.classList.add('open');
+                SoundFX.playTileOpen();
+            }
         });
 
         socket.on('answerRevealed', (data) => {
@@ -288,10 +386,11 @@
             });
         });
 
-        // 🏆 แสดงโพเดียม 1-5 เมื่อเล่นจบ
         socket.on('gameEnded', (data) => {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('podium-screen').style.display = 'block';
+
+            SoundFX.playFanfare();
 
             const top5 = data.top5;
             const top3Container = document.getElementById('podium-top3');
