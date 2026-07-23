@@ -29,91 +29,91 @@ const questions = [
     },
     {
         id: 3,
-        answers: "สุดสาคร",
+        answers: ["สุดสาคร"],
         image: "/images/3.jpg",
         hint: "ที่สุดในทะเล เจ้าของสัตว์มากเลห์นิลมังกร"
     },
     {
         id: 4,
-        answers: "พระราม",
+        answers: ["พระราม"],
         image: "/images/4.jpg",
         hint: "นารายณ์อวตาร"
     },
     {
         id: 5,
-        answers: "มัทนา",
+        answers: ["มัทนา"],
         image: "/images/5.jpg",
         hint: "ตำนานรักดอกกุหลาบ"
     },
     {
         id: 6,
-        answers: "วันทอง",
+        answers: ["วันทอง"],
         image: "/images/6.jpg",
         hint: "หญิงงามแห่งสุพรรณบุรี ชื่อเก่าคือพิมพิลาไลย"
     },
     {
         id: 7,
-        answers: "ม้านิลมังกร",
+        answers: ["ม้านิลมังกร"],
         image: "/images/7.jpg",
         hint: "เขี้ยวเป็นเพชร เกล็ดเป็นนิล ลิ้นเป็นปาน"
     },
     {
         id: 8,
-        answers: "ไกรทอง",
+        answers: ["ไกรทอง"],
         image: "/images/8.jpg",
         hint: "ผู้ปราบจระเข้"
     },
     {
         id: 9,
-        answers: "พระอภัยมณี",
+        answers: ["พระอภัยมณี"],
         image: "/images/9.jpg",
         hint: "Sorry Monk"
     },
     {
         id: 10,
-        answers: "ปลาบู่ทอง",
+        answers: ["ปลาบู่ทอง"],
         image: "/images/10.jpg",
         hint: "ตายไม่จริง สิงร่างปลา โดนฆ่าแกง"
     },
     {
         id: 11,
-        answers: "พระลอ",
+        answers: ["พระลอ"],
         image: "/images/11.JPG",
         hint: "คนหล่อตามไก่"
     },
     {
         id: 12,
-        answers: "สีดา",
+        answers: ["สีดา"],
         image: "/images/12.jpg",
         hint: "ต้นฉบับการลุยไฟ"
     },
     {
         id: 13,
-        answers: "ช้างเอราวัณ",
+        answers: ["ช้างเอราวัณ"],
         image: "/images/13.jpg",
         hint: "สัตว์สี่ขา แต่ว่ามี 33 หัว"
     },
     {
         id: 14,
-        answers: "บุษบา",
+        answers: ["บุษบา"],
         image: "/images/14.png",
         hint: "หญิงงามผู้เสี่ยงเทียนเลือกคู่"
     },
     {
         id: 15,
-        answers: "นนทก",
+        answers: ["นนทก"],
         image: "/images/15.jpg",
         hint: "นิ้วเพชร"
     },
     {
         id: 16,
-        answers: "อิเหนา",
+        answers: ["อิเหนา"],
         image: "/images/16.jpg",
         hint: "ว่าแต่เขา...เป็นเอง"
     },
     {
         id: 17,
-        answers: "ขุนช้าง",
+        answers: ["ขุนช้าง"],
         image: "/images/17.jpg",
         hint: "เมียเขาเรารัก"
     },
@@ -125,7 +125,7 @@ const questions = [
     },
     {
         id: 19,
-        answers: "ไมยราพ", 
+        answers: ["ไมยราพ"], 
         image: "/images/19.jpg",
         hint: "ถอดดวงใจเป็นแมลงภู่"
     },
