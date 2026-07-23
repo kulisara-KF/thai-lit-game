@@ -17,7 +17,6 @@
 
         .card { background: #1e293b; max-width: 420px; margin: 0 auto; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
         
-        /* ⏳ สไตล์หน้าห้องรอของผู้เล่น */
         .waiting-box { text-align: center; padding: 20px 10px; }
         .waiting-avatar { font-size: 64px; margin-bottom: 10px; animation: bounce 1.5s infinite; }
         .waiting-pulse { font-size: 18px; color: #38bdf8; font-weight: 600; animation: blink 1.2s infinite; }
@@ -47,10 +46,19 @@
         .result-screen { display: none; margin-top: 15px; padding: 15px; border-radius: 15px; }
         .result-screen.correct-bg { background: linear-gradient(135deg, #065f46, #047857); border: 2px solid #10b981; }
         .result-screen.wrong-bg { background: linear-gradient(135deg, #991b1b, #b91c1c); border: 2px solid #f87171; }
+        .result-screen.reveal-bg { background: linear-gradient(135deg, #1e1b4b, #312e81); border: 2px solid #818cf8; }
 
         .score-anim { font-size: 42px; font-weight: 800; margin: 5px 0; }
         .effect-tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 16px; font-weight: bold; background: rgba(0,0,0,0.4); margin-bottom: 10px; }
         .overtake-banner { background: #fbbf24; color: #78350f; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 16px; margin-top: 10px; }
+
+        /* โพเดียมฝั่งผู้เล่น */
+        .podium-player-box { background: #0f172a; padding: 20px; border-radius: 20px; border: 2px solid #facc15; }
+        .podium-stage-p { display: flex; justify-content: center; align-items: flex-end; gap: 10px; height: 200px; margin: 20px 0; }
+        .step-p { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; border-radius: 12px 12px 0 0; padding: 10px 2px; }
+        .step-p1 { height: 100%; background: #f59e0b; order: 2; color: #0f172a; }
+        .step-p2 { height: 70%; background: #94a3b8; order: 1; color: #0f172a; }
+        .step-p3 { height: 50%; background: #d97706; order: 3; color: white; }
     </style>
 </head>
 <body>
@@ -60,25 +68,25 @@
         <h2>โรงเรียนพระพุทธบาท "พลานุกูลวิทยา"</h2>
     </div>
 
-    <!-- 📌 หน้าที่ 1: กรอกชื่อ -->
+    <!-- 📌 LOBBY LOGIN -->
     <div class="card" id="login-box">
         <div style="font-size: 50px;">🎮</div>
-        <h2>แฟนพันธุ์แท้วรรณคดีไทย</h2>
+        <h2>วรรณคดีแฟนพันธุ์แท้</h2>
         <input type="text" id="player-name" placeholder="กรอกชื่อของคุณ..." required>
         <button onclick="joinGame()">🚀 เข้าร่วมเกม</button>
     </div>
 
-    <!-- 📌 หน้าที่ 2: ห้องรอเกมเริ่ม -->
+    <!-- 📌 WAITING ROOM -->
     <div class="card" id="waiting-box" style="display: none;">
         <div class="waiting-box">
             <div class="waiting-avatar">⚔️</div>
             <h2 style="margin: 5px 0; color: #facc15;">ยินดีต้อนรับ! <span id="lobby-player-name"></span></h2>
-            <p class="waiting-pulse">กำลังรอการเปิดฉากการแข่งขัน...</p>
+            <p class="waiting-pulse">กำลังรอคุณครูเปิดฉากการแข่งขัน...</p>
             <p style="font-size: 14px; color: #94a3b8; margin-top: 15px;">เตรียมตัวให้พร้อม ดูหน้าจอใหญ่เพื่อรออ่านคำใบ้!</p>
         </div>
     </div>
 
-    <!-- 📌 หน้าที่ 3: กระดานเล่นเกมจริง -->
+    <!-- 📌 GAME BOX -->
     <div class="card" id="game-box" style="display: none;">
         <div class="player-bar">
             <div>👤 <span id="my-name"></span></div>
@@ -87,7 +95,7 @@
         </div>
 
         <div class="timer-box">⏱️ เหลือเวลา: <span id="player-timer">30</span> วินาที</div>
-        <p id="question-title" style="font-size: 16px; color: #94a3b8;">เตรียมตัวนะ...</p>
+        <p id="question-title" style="font-size: 16px; color: #94a3b8;">รอครูเริ่มข้อสอบ...</p>
         
         <div class="box-container" id="char-boxes"></div>
         <input type="text" id="answer-input" placeholder="พิมพ์คำตอบที่นี่..." disabled oninput="updateBoxes()">
@@ -99,6 +107,14 @@
             <div id="score-gained" class="score-anim"></div>
             <div id="overtake-msg"></div>
         </div>
+    </div>
+
+    <!-- 📌 PODIUM SCREEN PLAYER -->
+    <div class="card podium-player-box" id="podium-box-player" style="display: none;">
+        <h2 style="color: #facc15; margin: 0;">🏆 สรุปผลการแข่งขัน 🏆</h2>
+        <div class="podium-stage-p" id="podium-p-top3"></div>
+        <div id="podium-p-rest"></div>
+        <button onclick="location.reload()" style="margin-top: 15px;">🔄 เล่นใหม่อีกครั้ง</button>
     </div>
 
     <script>
@@ -132,9 +148,7 @@
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.3);
                 }
-            } catch (e) {
-                console.log("Audio play error:", e);
-            }
+            } catch (e) { console.log(e); }
         }
 
         function joinGame() {
@@ -188,7 +202,6 @@
         });
 
         socket.on('loadQuestionPlayer', (data) => {
-            // เมื่อครูเริ่มข้อแรก สลับจากหน้าห้องรอไปยังหน้าตอบคำถาม
             document.getElementById('waiting-box').style.display = 'none';
             document.getElementById('game-box').style.display = 'block';
 
@@ -248,10 +261,56 @@
             }
         });
 
-        socket.on('answerRevealed', (answerText) => {
+        // 📌 แสดงเฉลยชัดเจนบนหน้าจอผู้เล่น
+        socket.on('answerRevealed', (data) => {
             document.getElementById('answer-input').disabled = true;
             document.getElementById('send-btn').disabled = true;
-            document.getElementById('question-title').innerHTML = `<b style="color: #4ade80; font-size: 18px;">💡 เฉลย: ${answerText}</b>`;
+
+            const resCard = document.getElementById('result-card');
+            resCard.style.display = 'block';
+            resCard.className = 'result-screen reveal-bg';
+            
+            document.getElementById('result-status').innerHTML = `💡 เฉลยคำตอบ`;
+            document.getElementById('effect-tag').innerText = `คำตอบที่ถูกต้องคือ`;
+            document.getElementById('effect-tag').style.color = `#a7f3d0`;
+            document.getElementById('score-gained').innerText = data.answerText;
+            document.getElementById('score-gained').style.fontSize = "26px";
+        });
+
+        // 🏆 หน้าโพเดียมฝั่งผู้เล่น
+        socket.on('gameEnded', (data) => {
+            document.getElementById('game-box').style.display = 'none';
+            document.getElementById('podium-box-player').style.display = 'block';
+
+            const top5 = data.top5;
+            const p1 = top5[0] || { name: '-', score: 0 };
+            const p2 = top5[1] || { name: '-', score: 0 };
+            const p3 = top5[2] || { name: '-', score: 0 };
+
+            document.getElementById('podium-p-top3').innerHTML = `
+                <div class="step-p step-p2">
+                    <div style="font-size:12px;"><b>${p2.name}</b></div>
+                    <div>🥈</div>
+                </div>
+                <div class="step-p step-p1">
+                    <div style="font-size:14px;">👑 <b>${p1.name}</b></div>
+                    <div>🥇</div>
+                </div>
+                <div class="step-p step-p3">
+                    <div style="font-size:12px;"><b>${p3.name}</b></div>
+                    <div>🥉</div>
+                </div>
+            `;
+
+            let restHTML = '<div style="margin-top:15px; text-align:left;">';
+            if(top5[3]) restHTML += `<div style="padding:6px; background:#1e293b; border-radius:8px; margin-bottom:5px;">4️⃣ ${top5[3].name} (${top5[3].score} pt)</div>`;
+            if(top5[4]) restHTML += `<div style="padding:6px; background:#1e293b; border-radius:8px;">5️⃣ ${top5[4].name} (${top5[4].score} pt)</div>`;
+            restHTML += '</div>';
+            document.getElementById('podium-p-rest').innerHTML = restHTML;
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.7 } });
+            }
         });
     </script>
 </body>
