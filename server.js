@@ -77,7 +77,7 @@ const questions = [
     {
         id: 11,
         answers: "พระลอ",
-        image: "/images/11.jpg",
+        image: "/images/11.JPG",
         hint: "คนหล่อตามไก่"
     },
     {
@@ -95,7 +95,7 @@ const questions = [
     {
         id: 14,
         answers: "บุษบา",
-        image: "/images/14.jpg",
+        image: "/images/14.png",
         hint: "หญิงงามผู้เสี่ยงเทียนเลือกคู่"
     },
     {
@@ -131,7 +131,7 @@ const questions = [
     {
         id: 20,
         answers: ["พระเพื่อน พระแพง", "พระเพื่อนพระแพง"], 
-        image: "/images/20.jpg",
+        image: "/images/20.jpeg",
         hint: "แฝดที่ ลอ เธอคนเดียว"
     }
 ];
