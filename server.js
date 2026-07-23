@@ -1,17 +1,13 @@
-const express = require('express');
+cconst express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/host', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'host.html'));
-});
 
 // 📌 สามารถเพิ่มข้อสอบได้ตามต้องการ (เช่น 20 ข้อ)
 const questions = [
@@ -137,125 +133,142 @@ const questions = [
     }
 ];
 
-
+// 📌 2. สถานะของเกม (Game State)
+let players = {}; // { socketId: { name, score, rank, prevRank, answered } }
 let currentQuestionIndex = -1;
-let players = {};
+let timer = null;
+let tileInterval = null;
+let timeLeft = 30;
+let revealedTiles = [];
 let correctCount = 0;
 let prevRankingsSnapshot = [];
-let timeLeft = 30;
-let timerInterval = null;
-let tileInterval = null;
-let isQuestionActive = false;
 
+// 📌 ฟังก์ชันนับกล่องพยัญชนะไทย (รวบสระบน-ล่าง/วรรณยุกต์ ไม่ให้กล่องเพี้ยน)
+function countThaiGraphemes(text) {
+    if (!text) return 0;
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        const segmenter = new Intl.Segmenter('th', { granularity: 'grapheme' });
+        return [...segmenter.segment(text)].length;
+    }
+    return Array.from(text).length;
+}
+
+// 📌 ฟังก์ชันจัดอันดับผู้เล่น
 function getSortedPlayers() {
-    return Object.entries(players)
-        .map(([id, p]) => ({ id, name: p.name, score: p.score, prevRank: p.prevRank || 999 }))
+    return Object.keys(players)
+        .map(id => ({ id, name: players[id].name, score: players[id].score }))
         .sort((a, b) => b.score - a.score);
 }
 
-function clearAllTimers() {
-    if (timerInterval) clearInterval(timerInterval);
-    if (tileInterval) clearInterval(tileInterval);
-    timerInterval = null;
-    tileInterval = null;
+// 📌 ฟังก์ชันส่งตารางคะแนนเรียลไทม์
+function broadcastLeaderboard() {
+    const sorted = getSortedPlayers();
+    io.emit('updateLeaderboard', sorted);
 }
 
+// 📌 ฟังก์ชันเริ่มนับถอยหลัง
 function startTimer() {
-    clearAllTimers();
+    clearInterval(timer);
     timeLeft = 30;
-    isQuestionActive = true;
     io.emit('timerUpdate', timeLeft);
 
-    timerInterval = setInterval(() => {
+    timer = setInterval(() => {
         timeLeft--;
         io.emit('timerUpdate', timeLeft);
 
         if (timeLeft <= 0) {
-            revealAnswerLogic();
+            clearInterval(timer);
+            clearInterval(tileInterval);
+            revealAnswerAuto();
         }
     }, 1000);
 }
 
+// 📌 ฟังก์ชันสุ่มเปิดแผ่นป้ายอัตโนมัติ
 function startAutoTileReveal() {
-    let unrevealedTiles = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
+    clearInterval(tileInterval);
+    revealedTiles = [];
 
     tileInterval = setInterval(() => {
-        if (unrevealedTiles.length > 0 && isQuestionActive) {
-            const tileIndex = unrevealedTiles.pop();
-            io.emit('tileRevealed', tileIndex);
+        if (revealedTiles.length < 16) {
+            let unrevealed = [];
+            for (let i = 0; i < 16; i++) {
+                if (!revealedTiles.includes(i)) unrevealed.push(i);
+            }
+            if (unrevealed.length > 0) {
+                const randomIndex = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+                revealedTiles.push(randomIndex);
+                io.emit('tileRevealed', randomIndex);
+            }
         } else {
-            if (tileInterval) clearInterval(tileInterval);
+            clearInterval(tileInterval);
         }
-    }, 1500);
+    }, 2500);
 }
 
-function revealAnswerLogic() {
-    clearAllTimers();
-    isQuestionActive = false;
-    
-    if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) return;
-    
-    const qData = questions[currentQuestionIndex];
-    if (!qData) return;
-    
-    const revealedText = qData.answers.join(" หรือ ");
-    const isLast = (currentQuestionIndex + 1) >= questions.length;
-    
-    io.emit('answerRevealed', {
-        answerText: revealedText,
-        isLastQuestion: isLast
-    });
+// 📌 เฉลยคำตอบอัตโนมัติเมื่อหมดเวลา
+function revealAnswerAuto() {
+    if (currentQuestionIndex >= 0 && currentQuestionIndex < questions.length) {
+        const qData = questions[currentQuestionIndex];
+        const answers = Array.isArray(qData.answers) ? qData.answers : [qData.answers];
+        io.emit('answerRevealed', { answerText: answers[0] });
+    }
 }
 
-function triggerGameOver() {
-    clearAllTimers();
-    isQuestionActive = false;
-    
-    const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-    const top5 = sorted.slice(0, 5);
-    
-    io.emit('gameEnded', { top5: top5 });
-}
-
-function broadcastPlayerList() {
-    const playerList = Object.values(players).map(p => p.name);
-    io.emit('updateLobbyPlayers', playerList);
-    io.emit('updatePlayerCount', playerList.length);
-}
-
+// 📌 3. SOCKET.IO EVENTS
 io.on('connection', (socket) => {
+
+    // ผู้เล่นเข้าร่วมเกม
     socket.on('joinGame', (data) => {
-        players[socket.id] = { name: data.playerName, score: 0, answered: false, prevRank: 999 };
-        broadcastPlayerList();
+        players[socket.id] = {
+            name: data.playerName,
+            score: 0,
+            prevRank: 0,
+            answered: false
+        };
+
+        const sortedNames = Object.values(players).map(p => p.name);
+        io.emit('updateLobbyPlayers', sortedNames);
+        io.emit('updatePlayerCount', Object.keys(players).length);
         broadcastLeaderboard();
     });
 
+    // โฮสต์สั่งเริ่มเกม (ย้ายจาก Lobby ไป Board)
     socket.on('startGameSession', () => {
-        currentQuestionIndex = -1;
-        io.emit('gameStartedByHost');
+        io.emit('gameStarted');
     });
 
+    // โฮสต์กดเริ่มข้อถัดไป
     socket.on('startNextQuestion', () => {
-        // เช็กว่าเล่นครบทุกข้อหรือยัง
         if (currentQuestionIndex + 1 >= questions.length) {
-            triggerGameOver();
+            // จบเกม
+            clearInterval(timer);
+            clearInterval(tileInterval);
+            const top5 = getSortedPlayers().slice(0, 5);
+            io.emit('gameEnded', { top5: top5 });
             return;
         }
 
         currentQuestionIndex++;
         correctCount = 0;
-        
+
+        // บันทึกอันดับก่อนหน้าไว้คำนวณการแซงคะแนน
         const sorted = getSortedPlayers();
         prevRankingsSnapshot = [...sorted];
         sorted.forEach((p, idx) => {
             if (players[p.id]) players[p.id].prevRank = idx + 1;
         });
 
+        // รีเซ็ตสถานะการตอบของผู้เล่น
         Object.keys(players).forEach(id => players[id].answered = false);
 
         const qData = questions[currentQuestionIndex];
-        const charBoxesCount = Array.from(qData.answers[0]).length;
+        const answerList = Array.isArray(qData.answers) ? qData.answers : [qData.answers];
+        const primaryAnswer = answerList[0] || "";
         
+        // คำนวณจำนวนกล่องด้วย Intl.Segmenter
+        const charBoxesCount = countThaiGraphemes(primaryAnswer);
+
         io.emit('loadQuestionHost', {
             qIndex: currentQuestionIndex + 1,
             totalQ: questions.length,
@@ -272,70 +285,75 @@ io.on('connection', (socket) => {
         startAutoTileReveal();
     });
 
-    socket.on('addTime', (seconds) => {
-        if (!isQuestionActive) return;
-        timeLeft += seconds;
+    // โฮสต์เปิดแผ่นป้าย
+    socket.on('revealTile', (tileIndex) => {
+        if (!revealedTiles.includes(tileIndex)) {
+            revealedTiles.push(tileIndex);
+            io.emit('tileRevealed', tileIndex);
+        }
+    });
+
+    // โฮสต์เพิ่มเวลา
+    socket.on('addTime', (sec) => {
+        timeLeft += sec;
         io.emit('timerUpdate', timeLeft);
     });
 
-    socket.on('revealTile', (tileIndex) => {
-        io.emit('tileRevealed', tileIndex);
-    });
-
+    // โฮสต์กดเฉลยคำตอบ
     socket.on('showAnswer', () => {
-        revealAnswerLogic();
+        clearInterval(timer);
+        clearInterval(tileInterval);
+        revealAnswerAuto();
     });
 
+    // ผู้เล่นส่งคำตอบ
     socket.on('submitAnswer', (data) => {
         const player = players[socket.id];
-        if (!player || player.answered || !isQuestionActive) return;
+        if (!player || player.answered || currentQuestionIndex < 0) return;
 
         player.answered = true;
-        const currentQ = questions[currentQuestionIndex];
-        const isCorrect = currentQ.answers.includes(data.answer.trim());
+        const qData = questions[currentQuestionIndex];
+        const validAnswers = Array.isArray(qData.answers) ? qData.answers : [qData.answers];
+        
+        // ตรวจสอบคำตอบแบบไม่สนช่องว่าง
+        const userAnsClean = data.answer.replace(/\s+/g, '').toLowerCase();
+        const isCorrect = validAnswers.some(ans => ans.replace(/\s+/g, '').toLowerCase() === userAnsClean);
 
         let scoreGained = 0;
-        let effect = { text: "🎯 คะแนนปกติ", color: "#38bdf8", type: "normal" };
+        let effect = { type: 'normal', text: 'ตอบถูก', color: '#10b981' };
 
         if (isCorrect) {
             correctCount++;
-            const baseScore = Math.max(100, 1000 - (data.timeUsed * 20));
+            let baseScore = 100;
             
-            const rand = Math.random() * 100;
-            if (rand < 15) {
-                effect = { text: "🔥 Critical x2!", color: "#f87171", type: "crit" };
-                scoreGained = baseScore * 2;
-            } else if (rand < 35) {
-                effect = { text: "⚡ Super Speed x1.5!", color: "#fbbf24", type: "speed" };
-                scoreGained = Math.floor(baseScore * 1.5);
-            } else if (rand < 50) {
-                effect = { text: "🎁 Lucky Bonus +300!", color: "#c084fc", type: "bonus" };
-                scoreGained = baseScore + 300;
-            } else {
-                scoreGained = baseScore;
+            // โบนัสความเร็ว
+            let speedBonus = Math.max(0, timeLeft * 2);
+            scoreGained = baseScore + speedBonus;
+
+            // คริติคอลสำหรับคนตอบถูกคนแรก
+            if (correctCount === 1) {
+                scoreGained += 50;
+                effect = { type: 'crit', text: '⚡ FASTEST! คนแรก +50 pt', color: '#facc15' };
+            } else if (speedBonus > 30) {
+                effect = { type: 'bonus', text: '🔥 SPEED BONUS! ตอบไว', color: '#38bdf8' };
             }
 
             player.score += scoreGained;
-            io.emit('updateCorrectCount', correctCount);
         } else {
-            const rand = Math.random() * 100;
-            if (rand < 25) {
-                effect = { text: "💣 เจอระเบิด -100!", color: "#ef4444", type: "trap" };
-                scoreGained = -100;
-                player.score = Math.max(0, player.score + scoreGained);
-            }
+            scoreGained = 0;
+            effect = { type: 'wrong', text: '❌ ตอบผิด', color: '#f87171' };
         }
 
-        const updatedSorted = getSortedPlayers();
-        const newRankIndex = updatedSorted.findIndex(p => p.id === socket.id);
-        const newRank = newRankIndex + 1;
-        const oldRank = player.prevRank || updatedSorted.length;
+        // คำนวณอันดับใหม่และการแซง
+        const currentSorted = getSortedPlayers();
+        const newRank = currentSorted.findIndex(p => p.id === socket.id) + 1;
+        const rankUp = player.prevRank > 0 ? player.prevRank - newRank : 0;
 
         let passedPlayerName = null;
-        if (newRank < oldRank) {
-            const surpassedPlayer = prevRankingsSnapshot[newRankIndex];
-            if (surpassedPlayer && surpassedPlayer.id !== socket.id) {
-                passedPlayerName = surpassedPlayer.name;
+        if (rankUp > 0 && prevRankingsSnapshot.length >= newRank) {
+            const passedPlayerObj = prevRankingsSnapshot[newRank - 1];
+            if (passedPlayerObj && passedPlayerObj.id !== socket.id) {
+                passedPlayerName = passedPlayerObj.name;
             }
         }
 
@@ -344,8 +362,7 @@ io.on('connection', (socket) => {
             scoreGained: scoreGained,
             currentScore: player.score,
             rank: newRank,
-            oldRank: oldRank,
-            rankUp: oldRank - newRank,
+            rankUp: Math.max(0, rankUp),
             passedPlayer: passedPlayerName,
             effect: effect
         });
@@ -353,19 +370,22 @@ io.on('connection', (socket) => {
         broadcastLeaderboard();
     });
 
+    // ผู้เล่นออกจากระบบ
     socket.on('disconnect', () => {
         delete players[socket.id];
-        broadcastPlayerList();
+        io.emit('updatePlayerCount', Object.keys(players).length);
+        io.emit('updateLobbyPlayers', Object.values(players).map(p => p.name));
         broadcastLeaderboard();
     });
 });
 
-function broadcastLeaderboard() {
-    const topPlayers = Object.values(players).sort((a, b) => b.score - a.score).slice(0, 10);
-    io.emit('updateLeaderboard', topPlayers);
-}
-
+// 📌 4. เริ่มต้นเซิร์ฟเวอร์ที่ Port 3000
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`✅ Server is running on port ${PORT}`);
+    console.log(`=================================`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📱 Host Screen: http://localhost:${PORT}/host.html`);
+    console.log(`🎮 Player Screen: http://localhost:${PORT}`);
+    console.log(`=================================`);
 });
+
