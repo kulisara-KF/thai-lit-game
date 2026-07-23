@@ -13,6 +13,7 @@ app.get('/host', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
 
+// 📌 สามารถเพิ่มข้อสอบได้ตามต้องการ (เช่น 20 ข้อ)
 const questions = [
     {
         id: 1,
@@ -152,8 +153,15 @@ function getSortedPlayers() {
         .sort((a, b) => b.score - a.score);
 }
 
+function clearAllTimers() {
+    if (timerInterval) clearInterval(timerInterval);
+    if (tileInterval) clearInterval(tileInterval);
+    timerInterval = null;
+    tileInterval = null;
+}
+
 function startTimer() {
-    clearInterval(timerInterval);
+    clearAllTimers();
     timeLeft = 30;
     isQuestionActive = true;
     io.emit('timerUpdate', timeLeft);
@@ -169,7 +177,6 @@ function startTimer() {
 }
 
 function startAutoTileReveal() {
-    clearInterval(tileInterval);
     let unrevealedTiles = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
 
     tileInterval = setInterval(() => {
@@ -177,14 +184,13 @@ function startAutoTileReveal() {
             const tileIndex = unrevealedTiles.pop();
             io.emit('tileRevealed', tileIndex);
         } else {
-            clearInterval(tileInterval);
+            if (tileInterval) clearInterval(tileInterval);
         }
     }, 1500);
 }
 
 function revealAnswerLogic() {
-    clearInterval(timerInterval);
-    clearInterval(tileInterval);
+    clearAllTimers();
     isQuestionActive = false;
     
     if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) return;
@@ -193,7 +199,22 @@ function revealAnswerLogic() {
     if (!qData) return;
     
     const revealedText = qData.answers.join(" หรือ ");
-    io.emit('answerRevealed', revealedText);
+    const isLast = (currentQuestionIndex + 1) >= questions.length;
+    
+    io.emit('answerRevealed', {
+        answerText: revealedText,
+        isLastQuestion: isLast
+    });
+}
+
+function triggerGameOver() {
+    clearAllTimers();
+    isQuestionActive = false;
+    
+    const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+    const top5 = sorted.slice(0, 5);
+    
+    io.emit('gameEnded', { top5: top5 });
 }
 
 function broadcastPlayerList() {
@@ -210,13 +231,20 @@ io.on('connection', (socket) => {
     });
 
     socket.on('startGameSession', () => {
+        currentQuestionIndex = -1;
         io.emit('gameStartedByHost');
     });
 
     socket.on('startNextQuestion', () => {
-        currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
+        // เช็กว่าเล่นครบทุกข้อหรือยัง
+        if (currentQuestionIndex + 1 >= questions.length) {
+            triggerGameOver();
+            return;
+        }
 
+        currentQuestionIndex++;
         correctCount = 0;
+        
         const sorted = getSortedPlayers();
         prevRankingsSnapshot = [...sorted];
         sorted.forEach((p, idx) => {
